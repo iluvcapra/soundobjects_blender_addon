@@ -37,15 +37,15 @@ bl_info = {
     "category": "Import-Export",
 }
 
-def compute_relative_vector(camera: bpy.types.Camera, object: bpy.types.Object):
+def compute_relative_vector(camera: bpy.types.Camera, target: bpy.types.Object):
     """
-    Return a vector from `camera` to `object` in the camera's coordinate space.
+    Return a vector from `camera` to `target` in the camera's coordinate space.
 
     The camera's lens is assumed to be norm to the ZX plane.
     """
     cam_loc, cam_rot, _ = camera.matrix_world.decompose()
-    obj_loc, _, _ = object.matrix_world.decompose()
-    relative_vector = obj_loc - cam_loc
+    target_loc, _, _ = target.matrix_world.decompose()
+    relative_vector = target_loc - cam_loc
     
     rotation = cam_rot.to_matrix().transposed()
     relative_vector.rotate(rotation)
