@@ -77,6 +77,21 @@ def room_norm_vector(vec, room_size=1.):
         return vec / chebyshev
 
 
+def closest_approach_to_camera(scene, speaker_object):
+    max_dist = sys.float_info.max
+    at_time = scene.frame_start
+    for frame in range(scene.frame_start, scene.frame_end + 1):
+        scene.frame_set(frame)
+        rel = speaker_object.matrix_world.to_translation() - scene.camera.matrix_world.to_translation()
+        dist = norm(rel)
+        
+        if dist < max_dist:
+            max_dist = dist
+            at_time = frame
+
+    return (max_dist, at_time)
+
+
 def speaker_active_time_range(speaker):
     """
     The time range this speaker must control in order to sound right.
@@ -93,6 +108,13 @@ def speaker_active_time_range(speaker):
                 end = strip.frame_end
 
     return int(start), int(end)
+
+
+def speakers_by_min_distance(scene, speakers):
+    def min_distance(speaker):
+        return closest_approach_to_camera(scene, speaker)[0]
+
+    return sorted(speakers, key=(lambda spk: min_distance(spk)))
 
 
 def speakers_by_start_time(speaker_objs):
@@ -128,18 +150,14 @@ def group_speakers(speaker_objs):
 
 def adm_block_formats_for_speakers(scene, speaker_objs, room_size=1.):
     
-    block_formats = []
-    
-    # frame_start = start_frame or scene.frame_start
-    # frame_end = end_frame or scene.frame_end
     fps = scene.render.fps
+    block_formats = []
 
     for speaker_obj in speakers_by_start_time(speaker_objs):
         speaker_start, speaker_end = speaker_active_time_range(speaker_obj)
         for frame in range(speaker_start, speaker_end + 1):
             scene.frame_set(frame)
-            relative_vector = compute_relative_vector(camera=scene.camera, 
-                                                      object=speaker_obj)
+            relative_vector = compute_relative_vector(camera=scene.camera, target=speaker_obj)
             
             norm_vec = room_norm_vector(relative_vector, room_size=room_size)
             
@@ -160,7 +178,21 @@ def adm_block_formats_for_speakers(scene, speaker_objs, room_size=1.):
     return block_formats
 
 
-def adm_data_for_scene(scene, speaker_objs_lists, wav_format, room_size):
+def adm_for_object(scene, speakers_this_mixdown, room_size, b, i, frame_start, fps, frame_end, wav_format):
+    block_formats = adm_block_formats_for_speakers(scene=scene, 
+                                                   speaker_objs=speakers_this_mixdown, 
+                                                   room_size=room_size)
+    created = b.create_item_objects(track_index=i, 
+                                    name=speakers_this_mixdown[0].name,
+                                    block_formats=block_formats)
+
+    created.audio_object.start = Fraction(frame_start, fps)
+    created.audio_object.duration = Fraction(frame_end - frame_start, fps)
+    created.track_uid.sampleRate = wav_format.sampleRate
+    created.track_uid.bitDepth = wav_format.bitsPerSample
+  
+
+def adm_for_scene(scene, speaker_groups, wav_format, room_size):
     
     b = ADMBuilder()
     
@@ -174,17 +206,8 @@ def adm_data_for_scene(scene, speaker_objs_lists, wav_format, room_size):
                    
     b.create_content(audioContentName="Objects")
     
-    for i, speakers_this_mixdown in enumerate(speaker_objs_lists):
-        block_formats = adm_block_formats_for_speakers(scene, speakers_this_mixdown, 
-                                                      room_size=room_size)
-        created = b.create_item_objects(track_index=i, 
-                                        name=speakers_this_mixdown[0].name,
-                                        block_formats=block_formats)
-        
-        created.audio_object.start = Fraction(frame_start, fps)
-        created.audio_object.duration = Fraction(frame_end - frame_start, fps)
-        created.track_uid.sampleRate = wav_format.sampleRate
-        created.track_uid.bitDepth = wav_format.bitsPerSample
+    for i, speakers_this_mixdown in enumerate(speaker_groups):
+        adm_for_object(scene, speakers_this_mixdown, room_size, b, i, frame_start, fps, frame_end, wav_format)
     
     adm = b.adm
     
@@ -193,7 +216,11 @@ def adm_data_for_scene(scene, speaker_objs_lists, wav_format, room_size):
     adm_chna.populate_chna_chunk(chna, adm)
     
     return adm_to_xml(adm), chna
-  
+
+
+########################################################################
+# File writing functions below
+
 
 def bext_data(scene, speaker_obj, sample_rate, room_size):
     description = "SCENE={};ROOM_SIZE={}\n".format(scene.name, room_size).encode("ascii")
@@ -210,19 +237,9 @@ def bext_data(scene, speaker_obj, sample_rate, room_size):
                        originator_ref, date10, time8, timeref, version, umid, pad)
                        
     return data
-    
 
-def write_muxed_adm(scene, mixdowns, output_filename=None, room_size=1.):
-    """
-    mixdowns are a tuple of wave filename, and corresponding speaker object
-    """
-    object_count = len(mixdowns)
-    assert object_count > 0
-    
-    READ_BLOCK=1024
-    out_file = output_filename or os.path.join(os.path.dirname(mixdowns[0][0]), 
-                            bpy.path.clean_name(scene.name) + ".wav")
-    
+
+def load_infiles_for_muxing(mixdowns):
     infiles = []
     shortest_file = 0xFFFFFFFFFFFF
     for elem in mixdowns:
@@ -230,39 +247,64 @@ def write_muxed_adm(scene, mixdowns, output_filename=None, room_size=1.):
         infiles.append(infile)
         if len(infile) < shortest_file:
             shortest_file = len(infile)
-        
+    return infiles, shortest_file
+
+
+def rm_object_mixes(mixdowns):
+    for elem in mixdowns:
+        os.unlink(elem[0])
+
+
+
+def write_muxed_wav(mixdowns, scene, out_format, room_size, outfile, shortest_file, object_count, infiles):
+    
+    READ_BLOCK=1024
+    speaker_groups = list(map(lambda x: x[1], mixdowns))
+    
+    adm, chna = adm_for_scene(scene, speaker_groups, out_format, room_size=room_size)
+
+    outfile.axml = lxml.etree.tostring(adm, pretty_print=True)
+    outfile.chna = chna
+    outfile.bext = bext_data(scene, None, out_format.sampleRate, room_size=room_size)
+
+    cursor = 0
+    while True:
+        remainder = shortest_file - cursor
+        to_read = min(READ_BLOCK, remainder)
+        if to_read == 0:
+            break
+
+        buffer = numpy.zeros((to_read, object_count))
+        for i, infile in enumerate(infiles):
+            buffer[: , i] = infile.read(to_read)[: , 0]
+
+        outfile.write(buffer)
+        cursor = cursor + to_read
+
+
+def mux_adm_from_object_mixdowns(scene, mixdowns_spk_list_tuple, output_filename=None, room_size=1.):
+    """
+    mixdowns are a tuple of wave filename, and corresponding speaker object
+    """
+    object_count = len(mixdowns_spk_list_tuple)
+    assert object_count > 0
+    
+    infiles, shortest_file = load_infiles_for_muxing(mixdowns_spk_list_tuple)
+    
+    out_file = output_filename or os.path.join(os.path.dirname(mixdowns_spk_list_tuple[0][0]), 
+                            bpy.path.clean_name(scene.name) + ".wav")
     
     out_format = FormatInfoChunk(channelCount=object_count, 
                                    sampleRate=infiles[0].sampleRate,
                                    bitsPerSample=infiles[0].bitdepth)
     
-    
     with openBw64(out_file, 'w', formatInfo=out_format) as outfile:
-        speakers = list(map(lambda x: x[1], mixdowns))
-        adm, chna = adm_data_for_scene(scene, speakers, out_format, room_size=room_size)
-        outfile.axml = lxml.etree.tostring(adm, pretty_print=True)
-        outfile.chna = chna
-        outfile.bext = bext_data(scene, None, out_format.sampleRate, room_size=room_size)
-        
-        cursor = 0
-        while True:
-            remainder = shortest_file - cursor
-            to_read = min(READ_BLOCK, remainder)
-            if to_read == 0:
-                break
-            
-            buffer = numpy.zeros((to_read, object_count))
-            for i, infile in enumerate(infiles):
-                buffer[: , i] = infile.read(to_read)[: , 0]
-            
-            outfile.write(buffer)
-            cursor = cursor + to_read
+        write_muxed_wav(mixdowns_spk_list_tuple, scene, out_format, room_size, outfile, shortest_file, object_count, infiles)
     
     for infile in infiles:
         infile._buffer.close()
         
-    for elem in mixdowns:
-        os.unlink(elem[0])
+    rm_object_mixes(mixdowns_spk_list_tuple)
 
 
 def all_speakers(scene):
@@ -283,18 +325,24 @@ def unmute_all_speakers(scene):
     for speaker in all_speakers(scene):
         speaker.data.muted = False
         speaker.data.update_tag()
-        
 
-def speaker_mixdowns(scene, filepath):
+
+def create_mixdown_for_object(scene, speaker_group, basedir):
+    solo_speakers(scene, speaker_group)
+
+    scene_name = bpy.path.clean_name(scene.name)
+    speaker_name = bpy.path.clean_name(speaker_group[0].name)
+
+    fn = os.path.join(basedir, "%s_%s.wav" % (scene_name, speaker_name) )
+    bpy.ops.sound.mixdown(filepath=fn, container='WAV', codec='PCM', format='S24')
+    return fn
+
+
+def generate_speaker_mixdowns(scene, speaker_groups, filepath):
     basedir = os.path.dirname(filepath)
-    for speaker_group in group_speakers(all_speakers(scene)):
-        solo_speakers(scene, speaker_group)
-    
-        scene_name = bpy.path.clean_name(scene.name)
-        speaker_name = bpy.path.clean_name(speaker_group[0].name)
 
-        fn = os.path.join(basedir, "%s_%s.wav" % (scene_name, speaker_name) )
-        bpy.ops.sound.mixdown(filepath=fn, container='WAV', codec='PCM', format='S24')
+    for speaker_group in speaker_groups:
+        fn = create_mixdown_for_object(scene, speaker_group, basedir)
         yield (fn, speaker_group)
 
 
@@ -314,7 +362,7 @@ def restore_output_state(ctx, context):
     context.scene.render.ffmpeg.audio_channels = ctx[2]
 
 
-def write_some_data(context, filepath, room_size):
+def write_some_data(context, filepath, room_size, max_objects):
     ctx = save_output_state(context)
     
     scene = bpy.context.scene
@@ -323,12 +371,35 @@ def write_some_data(context, filepath, room_size):
     scene.render.ffmpeg.audio_codec = 'PCM'
     scene.render.ffmpeg.audio_channels = 'MONO'
 
-    mixdowns = list(speaker_mixdowns(scene, filepath))
-    mixdown_count = len(mixdowns)
+    sound_sources = all_speakers(scene)
+
+ 
+    sorted_speakers = speakers_by_start_time(sound_sources)
+
+    object_groups = group_speakers(sorted_speakers)
+
+    closest_speakers = speakers_by_min_distance(scene, sound_sources)
+    too_far_speakers = []
+    n = len(closest_speakers) - 1
+    while len(object_groups) > max_objects:
+        sorted_speakers = speakers_by_start_time(closest_speakers[0:n])
+        too_far_speakers = closest_speakers[n:]
+        object_groups = group_speakers(sorted_speakers)
+        n = n - 1
+
+    print("Will create {} objects for {} sources, ignoring {} sources".format(
+                 len(object_groups), len(sorted_speakers), len(too_far_speakers)))
+
+    mixdowns_spk_list_tuple = list(generate_speaker_mixdowns(scene, object_groups, filepath))
+
+    mixdown_count = len(mixdowns_spk_list_tuple)
+
     if mixdown_count == 0:
         return {'FINISHED'}
     else:
-        write_muxed_adm(scene, mixdowns, output_filename= filepath, room_size=room_size)
+        mux_adm_from_object_mixdowns(scene, mixdowns_spk_list_tuple, 
+                                     output_filename= filepath, 
+                                     room_size=room_size)
     
     #cleanup
     unmute_all_speakers(scene)
@@ -344,7 +415,7 @@ def write_some_data(context, filepath, room_size):
 # ExportHelper is a helper class, defines filename and
 # invoke() function which calls the file selector.
 from bpy_extras.io_utils import ExportHelper
-from bpy.props import StringProperty, BoolProperty, EnumProperty, FloatProperty
+from bpy.props import StringProperty, BoolProperty, EnumProperty, FloatProperty, IntProperty
 from bpy.types import Operator
 
 
@@ -371,8 +442,16 @@ class ADMWaveExport(Operator, ExportHelper):
         unit='LENGTH'
     )
 
+    max_objects: IntProperty(
+        name="Max Objects",
+        description="Maximum number of objects to create",
+        default=24,
+        min=0,
+        max=118
+    )
+
     def execute(self, context):
-        return write_some_data(context, self.filepath, self.room_size)
+        return write_some_data(context, self.filepath, self.room_size, self.max_objects)
 
 
 # Only needed if you want to add into a dynamic menu
