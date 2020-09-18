@@ -14,7 +14,6 @@ from ear.fileio.adm.elements.geom import ObjectCartesianPosition
 from ear.fileio.adm.builder import (ADMBuilder, TypeDefinition)
 from ear.fileio.adm.generate_ids import generate_ids
 
-
 import lxml
 import uuid
 from fractions import Fraction
@@ -27,6 +26,9 @@ from mathutils import Quaternion, Vector
 from time import strftime
 from math import sqrt
 
+from dataclasses import dataclass
+from typing import List, Tuple
+
 bl_info = {
     "name": "Export ADM Broadcast-WAV File",
     "description": "Export a Broadcast-WAV with each speaker as an ADM object",
@@ -36,6 +38,16 @@ bl_info = {
     "blender": (2, 90, 0),
     "category": "Import-Export",
 }
+
+class FrameInterval:
+    def __init__(self, start_frame, end_frame):
+        self.start_frame = int(start_frame)
+        self.end_frame = int(end_frame)
+
+    def overlaps(self, other : 'FrameInterval') -> bool:
+        return self.start_frame <= other.start_frame <= self.end_frame or \
+            other.start_frame <= self.start_frame <= other.end_frame
+
 
 def compute_relative_vector(camera: bpy.types.Camera, target: bpy.types.Object):
     """
@@ -58,7 +70,7 @@ def compute_relative_vector(camera: bpy.types.Camera, target: bpy.types.Object):
     return relative_vector
 
 
-def room_norm_vector(vec, room_size=1.):
+def room_norm_vector(vec, room_size=1.) -> Vector:
     """
     The Room is tearing me apart, Lisa.
 
@@ -77,7 +89,7 @@ def room_norm_vector(vec, room_size=1.):
         return vec / chebyshev
 
 
-def closest_approach_to_camera(scene, speaker_object):
+def closest_approach_to_camera(scene, speaker_object) -> (float, int):
     max_dist = sys.float_info.max
     at_time = scene.frame_start
     for frame in range(scene.frame_start, scene.frame_end + 1):
@@ -92,7 +104,7 @@ def closest_approach_to_camera(scene, speaker_object):
     return (max_dist, at_time)
 
 
-def speaker_active_time_range(speaker):
+def speaker_active_time_range(speaker) -> FrameInterval:
     """
     The time range this speaker must control in order to sound right.
 
@@ -107,7 +119,7 @@ def speaker_active_time_range(speaker):
             if strip.frame_end > end:
                 end = strip.frame_end
 
-    return int(start), int(end)
+    return FrameInterval(start_frame=start, end_frame=end)
 
 
 def speakers_by_min_distance(scene, speakers):
@@ -118,34 +130,37 @@ def speakers_by_min_distance(scene, speakers):
 
 
 def speakers_by_start_time(speaker_objs):
-    return sorted(speaker_objs, key=(lambda spk: speaker_active_time_range(spk)[0]))
+    return sorted(speaker_objs, key=(lambda spk: speaker_active_time_range(spk).start_frame))
 
 
-def group_speakers(speaker_objs):
-    def group_speakers_impl1(bag):
-        "Returns a useable group and the remainder"
-        leftover = []
-        this_group = []
-        boundary = -0xffffffff
-        for speaker in bag:
-            start, end = speaker_active_time_range(speaker)
-            if start > boundary:
-                this_group.append(speaker)
-                boundary = end
-            else:
-                leftover.append(speaker)
+def group_speakers(speakers, scene) -> List[List[bpy.types.Object]]:
+    def list_can_accept_speaker(speaker_list, speaker_to_test):
+        """
+        returns True if speaker_list contains no speakers active in
+        the range speaker_to_test is active in
+        """
+        test_range = speaker_active_time_range(speaker_to_test)
+        for spk in speaker_list:
+            spk_range = speaker_active_time_range(spk)
+            if spk_range.overlaps(test_range):
+                return False
 
-        return (this_group, leftover)
+        return True
 
-    groups = []
-    remaining = speaker_objs
-    while len(remaining) > 0:
-        results = group_speakers_impl1(remaining)
-        groups.append(results[0])
-        remaining = results[1]
+    by_priority = speakers_by_min_distance(scene, speakers)
 
-    print("Will group {} sources into {} objects".format(len(speaker_objs), len(groups)))
-    return groups
+    ret_val = [[]]
+    for spk in by_priority:
+        for elem in ret_val:
+            if list_can_accept_speaker(elem, spk):
+                elem.append(spk)
+                break
+        ret_val.append([spk])
+
+    for i in range(len(ret_val)):
+        ret_val[i] = speakers_by_start_time(ret_val[i])
+
+    return ret_val
 
 
 def adm_block_formats_for_speakers(scene, speaker_objs, room_size=1.):
@@ -154,8 +169,8 @@ def adm_block_formats_for_speakers(scene, speaker_objs, room_size=1.):
     block_formats = []
 
     for speaker_obj in speakers_by_start_time(speaker_objs):
-        speaker_start, speaker_end = speaker_active_time_range(speaker_obj)
-        for frame in range(speaker_start, speaker_end + 1):
+        speaker_interval = speaker_active_time_range(speaker_obj)
+        for frame in range(speaker_interval.start_frame, speaker_interval.end_frame + 1):
             scene.frame_set(frame)
             relative_vector = compute_relative_vector(camera=scene.camera, target=speaker_obj)
             
@@ -251,14 +266,15 @@ def load_infiles_for_muxing(mixdowns):
 
 
 def rm_object_mixes(mixdowns):
+    print("rm_object_mixes entered")
     for elem in mixdowns:
         os.unlink(elem[0])
 
 
 
 def write_muxed_wav(mixdowns, scene, out_format, room_size, outfile, shortest_file, object_count, infiles):
-    
-    READ_BLOCK=1024
+    print("write_muxed_wav entered")
+    READ_BLOC=1024
     speaker_groups = list(map(lambda x: x[1], mixdowns))
     
     adm, chna = adm_for_scene(scene, speaker_groups, out_format, room_size=room_size)
@@ -373,22 +389,14 @@ def write_some_data(context, filepath, room_size, max_objects):
 
     sound_sources = all_speakers(scene)
 
- 
-    sorted_speakers = speakers_by_start_time(sound_sources)
-
-    object_groups = group_speakers(sorted_speakers)
-
-    closest_speakers = speakers_by_min_distance(scene, sound_sources)
+    object_groups = group_speakers(sound_sources, scene)
     too_far_speakers = []
-    n = len(closest_speakers) - 1
-    while len(object_groups) > max_objects:
-        sorted_speakers = speakers_by_start_time(closest_speakers[0:n])
-        too_far_speakers = closest_speakers[n:]
-        object_groups = group_speakers(sorted_speakers)
-        n = n - 1
+    if len(object_groups) > max_objects:
+        too_far_speakers = object_groups[max_objects:]
+        object_groups =object_groups[0:max_objects]
 
     print("Will create {} objects for {} sources, ignoring {} sources".format(
-                 len(object_groups), len(sorted_speakers), len(too_far_speakers)))
+                 len(object_groups), len(sound_sources), len(too_far_speakers)))
 
     mixdowns_spk_list_tuple = list(generate_speaker_mixdowns(scene, object_groups, filepath))
 
