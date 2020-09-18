@@ -354,6 +354,8 @@ def create_mixdown_for_object(scene, speaker_group, basedir):
     fn = os.path.join(basedir, "%s_%s.wav" % (scene_name, speaker_name) )
     bpy.ops.sound.mixdown(filepath=fn, container='WAV', codec='PCM', format='S24')
     print("Created mixdown named {}".format(fn))
+
+    unmute_all_speakers(scene)
     return fn
 
 
@@ -407,7 +409,6 @@ def write_some_data(context, filepath, room_size, max_objects):
             print(" - %s" % source.name)
 
     mixdowns_spk_list_tuple = list(generate_speaker_mixdowns(scene, object_groups, filepath))
-
     mixdown_count = len(mixdowns_spk_list_tuple)
 
     if mixdown_count == 0:
@@ -420,7 +421,6 @@ def write_some_data(context, filepath, room_size, max_objects):
     #cleanup
     #print("Will delete {} input object files".format(len(mixdowns_spk_list_tuple)))
     rm_object_mixes(mixdowns_spk_list_tuple)
-    unmute_all_speakers(scene)
     restore_output_state(ctx, context)
     return {'FINISHED'}
 
