@@ -274,7 +274,7 @@ def rm_object_mixes(mixdowns):
 
 def write_muxed_wav(mixdowns, scene, out_format, room_size, outfile, shortest_file, object_count, infiles):
     print("write_muxed_wav entered")
-    READ_BLOC=1024
+    READ_BLOCK=1024
     speaker_groups = list(map(lambda x: x[1], mixdowns))
     
     adm, chna = adm_for_scene(scene, speaker_groups, out_format, room_size=room_size)
