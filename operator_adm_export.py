@@ -33,7 +33,7 @@ bl_info = {
     "name": "Export ADM Broadcast-WAV File",
     "description": "Export a Broadcast-WAV with each speaker as an ADM object",
     "author": "Jamie Hardt",
-    "version": (0, 22),
+    "version": (0, 23),
     "warning": "Requires `ear` EBU ADM Renderer package to be installed",
     "blender": (2, 90, 0),
     "category": "Import-Export",
