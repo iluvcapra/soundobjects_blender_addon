@@ -151,11 +151,14 @@ def group_speakers(speakers, scene) -> List[List[bpy.types.Object]]:
 
     ret_val = [[]]
     for spk in by_priority:
+        success = False # flaggy-flag because I can't do a break->continue from the inner
         for elem in ret_val:
             if list_can_accept_speaker(elem, spk):
                 elem.append(spk)
+                success = True
                 break
-        ret_val.append([spk])
+        if not success:
+            ret_val.append([spk])
 
     for i in range(len(ret_val)):
         ret_val[i] = speakers_by_start_time(ret_val[i])
@@ -265,15 +268,8 @@ def load_infiles_for_muxing(mixdowns):
     return infiles, shortest_file
 
 
-def rm_object_mixes(mixdowns):
-    print("rm_object_mixes entered")
-    for elem in mixdowns:
-        os.unlink(elem[0])
-
-
-
 def write_muxed_wav(mixdowns, scene, out_format, room_size, outfile, shortest_file, object_count, infiles):
-    print("write_muxed_wav entered")
+    #print("write_muxed_wav entered")
     READ_BLOCK=1024
     speaker_groups = list(map(lambda x: x[1], mixdowns))
     
@@ -302,9 +298,11 @@ def mux_adm_from_object_mixdowns(scene, mixdowns_spk_list_tuple, output_filename
     """
     mixdowns are a tuple of wave filename, and corresponding speaker object
     """
+    #print("mux_adm_from_object_mixdowns entered")
+
     object_count = len(mixdowns_spk_list_tuple)
     assert object_count > 0
-    
+
     infiles, shortest_file = load_infiles_for_muxing(mixdowns_spk_list_tuple)
     
     out_file = output_filename or os.path.join(os.path.dirname(mixdowns_spk_list_tuple[0][0]), 
@@ -319,8 +317,12 @@ def mux_adm_from_object_mixdowns(scene, mixdowns_spk_list_tuple, output_filename
     
     for infile in infiles:
         infile._buffer.close()
-        
-    rm_object_mixes(mixdowns_spk_list_tuple)
+
+
+def rm_object_mixes(mixdowns):
+   #print("rm_object_mixes entered")
+    for elem in mixdowns:
+        os.remove(elem[0])
 
 
 def all_speakers(scene):
@@ -351,6 +353,7 @@ def create_mixdown_for_object(scene, speaker_group, basedir):
 
     fn = os.path.join(basedir, "%s_%s.wav" % (scene_name, speaker_name) )
     bpy.ops.sound.mixdown(filepath=fn, container='WAV', codec='PCM', format='S24')
+    print("Created mixdown named {}".format(fn))
     return fn
 
 
@@ -393,10 +396,15 @@ def write_some_data(context, filepath, room_size, max_objects):
     too_far_speakers = []
     if len(object_groups) > max_objects:
         too_far_speakers = object_groups[max_objects:]
-        object_groups =object_groups[0:max_objects]
+        object_groups = object_groups[0:max_objects]
 
     print("Will create {} objects for {} sources, ignoring {} sources".format(
                  len(object_groups), len(sound_sources), len(too_far_speakers)))
+
+    for i, group in enumerate(object_groups):
+        print("Object Group %i"%i)
+        for source in group:
+            print(" - %s" % source.name)
 
     mixdowns_spk_list_tuple = list(generate_speaker_mixdowns(scene, object_groups, filepath))
 
@@ -410,6 +418,8 @@ def write_some_data(context, filepath, room_size, max_objects):
                                      room_size=room_size)
     
     #cleanup
+    #print("Will delete {} input object files".format(len(mixdowns_spk_list_tuple)))
+    rm_object_mixes(mixdowns_spk_list_tuple)
     unmute_all_speakers(scene)
     restore_output_state(ctx, context)
     return {'FINISHED'}
