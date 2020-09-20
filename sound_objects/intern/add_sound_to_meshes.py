@@ -166,13 +166,13 @@ def add_speakers_to_meshes(meshes, context, sound=None,
         if sound is not None:
             speaker_obj.data.sound = sound
         
-        sync_audio(speaker_obj, sound, context, 
-                   sync_peak=sync_peak, 
-                   trigger_mode=trigger_mode,
-                   gaussian_stddev=gaussian_stddev,
-                   sound_bank=sound_bank, envelope=envelope)
-                
-        apply_gain_envelope(speaker_obj, envelope)
+            sync_audio(speaker_obj, sound, context, 
+                    sync_peak=sync_peak, 
+                    trigger_mode=trigger_mode,
+                    gaussian_stddev=gaussian_stddev,
+                    sound_bank=sound_bank, envelope=envelope)
+                    
+            apply_gain_envelope(speaker_obj, envelope)
 
         speaker_obj.data.update_tag()
 

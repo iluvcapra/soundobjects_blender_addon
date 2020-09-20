@@ -16,7 +16,10 @@ class SoundBank:
         return [sound for sound in bpy.data.sounds if sound.name.startswith(self.prefix)] 
 
     def random_sound(self) -> Sound:
-        return choice(self.sounds())
+        if len(self.sounds()) == 0:
+            return None
+        else:
+            return choice(self.sounds())
 
     def get_audiofile_info(self, sound, fps) -> (int, int):
         """
