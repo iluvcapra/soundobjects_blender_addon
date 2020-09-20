@@ -471,22 +471,3 @@ class ADMWaveExport(Operator, ExportHelper):
     def execute(self, context):
         return write_some_data(context, self.filepath, self.room_size, self.max_objects)
 
-
-# Only needed if you want to add into a dynamic menu
-# def menu_func_export(self, context):
-#     self.layout.operator(ADMWaveExport.bl_idname, text="ADM Broadcast-WAVE (.wav)")
-
-
-# def register():
-#     bpy.utils.register_class(ADMWaveExport)
-#     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
-
-
-# def unregister():
-#     bpy.utils.unregister_class(ADMWaveExport)
-#     bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
-
-
-# if __name__ == "__main__":
-#     register()
-

@@ -83,24 +83,3 @@ class ImportWav(Operator, ImportHelper):
                               dir=self.all_in_directory, fake=self.fake,  
                               pack=False)
 
-
-# Only needed if you want to add into a dynamic menu
-# def menu_func_import(self, context):
-#     self.layout.operator(ImportWav.bl_idname, text="WAV Audio Files (.wav)")
-
-
-# def register():
-#     bpy.utils.register_class(ImportWav)
-#     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
-
-
-# def unregister():
-#     bpy.utils.unregister_class(ImportWav)
-#     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
-
-
-# if __name__ == "__main__":
-#     register()
-
-    # test call
-#    bpy.ops.import_test.wav_file_batch('INVOKE_DEFAULT')

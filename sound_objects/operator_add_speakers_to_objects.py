@@ -298,22 +298,3 @@ class AddSoundToMeshOperator(Operator):
                        sync_peak=self.sync_audio_peak,
                        gaussian_stddev=self.gaussian_stddev)
         return {'FINISHED'}
-
-
-# def menu_func(self, context):
-#     self.layout.operator(AddSoundToMeshOperator.bl_idname, icon='SPEAKER')
-
-
-# def register():
-#     bpy.utils.register_class(AddSoundToMeshOperator)
-#     bpy.types.VIEW3D_MT_object.append(menu_func)
-
-
-# def unregister():
-#     bpy.utils.unregister_class(AddSoundToMeshOperator)
-#     bpy.types.VIEW3D_MT_object.remove(menu_func)
-
-
-# if __name__ == "__main__":
-#     register()
-
