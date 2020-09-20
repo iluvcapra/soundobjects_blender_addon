@@ -1,17 +1,17 @@
 import bpy
 import os
 
-bl_info = {
-    "name": "Import WAV Files",
-    "description": "Import WAV files, with options to automatically pack and Fake user",
-    "author": "Jamie Hardt",
-    "version": (0, 20),
-    "blender": (2, 90, 0),
-    "location": "File > Import > WAV Audio Files",
-    "warning": "", # used for warning icon and text in addons panel
-    "support": "COMMUNITY",
-    "category": "Import-Export",
-}
+# bl_info = {
+#     "name": "Import WAV Files",
+#     "description": "Import WAV files, with options to automatically pack and Fake user",
+#     "author": "Jamie Hardt",
+#     "version": (0, 20),
+#     "blender": (2, 90, 0),
+#     "location": "File > Import > WAV Audio Files",
+#     "warning": "", # used for warning icon and text in addons panel
+#     "support": "COMMUNITY",
+#     "category": "Import-Export",
+# }
 
 def read_some_data(context, filepath, pack, dir, fake):
     
@@ -85,22 +85,22 @@ class ImportWav(Operator, ImportHelper):
 
 
 # Only needed if you want to add into a dynamic menu
-def menu_func_import(self, context):
-    self.layout.operator(ImportWav.bl_idname, text="WAV Audio Files (.wav)")
+# def menu_func_import(self, context):
+#     self.layout.operator(ImportWav.bl_idname, text="WAV Audio Files (.wav)")
 
 
-def register():
-    bpy.utils.register_class(ImportWav)
-    bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
+# def register():
+#     bpy.utils.register_class(ImportWav)
+#     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
 
 
-def unregister():
-    bpy.utils.unregister_class(ImportWav)
-    bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
+# def unregister():
+#     bpy.utils.unregister_class(ImportWav)
+#     bpy.types.TOPBAR_MT_file_import.remove(menu_func_import)
 
 
-if __name__ == "__main__":
-    register()
+# if __name__ == "__main__":
+#     register()
 
     # test call
 #    bpy.ops.import_test.wav_file_batch('INVOKE_DEFAULT')

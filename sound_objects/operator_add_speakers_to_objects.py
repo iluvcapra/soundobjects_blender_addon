@@ -17,14 +17,14 @@ from typing import List
 
 import sys
 
-bl_info = {
-    "name": "Add Sounds to Objects",
-    "description": "Adds sounds to selected mesh objects",
-    "author": "Jamie Hardt",
-    "version": (0, 21),
-    "blender": (2, 90, 0),
-    "category": "Object",
-}
+# bl_info = {
+#     "name": "Add Sounds to Objects",
+#     "description": "Adds sounds to selected mesh objects",
+#     "author": "Jamie Hardt",
+#     "version": (0, 21),
+#     "blender": (2, 90, 0),
+#     "category": "Object",
+# }
     
 class SoundBank:
     def __init__(self, prefix):
@@ -300,20 +300,20 @@ class AddSoundToMeshOperator(Operator):
         return {'FINISHED'}
 
 
-def menu_func(self, context):
-    self.layout.operator(AddSoundToMeshOperator.bl_idname, icon='SPEAKER')
+# def menu_func(self, context):
+#     self.layout.operator(AddSoundToMeshOperator.bl_idname, icon='SPEAKER')
 
 
-def register():
-    bpy.utils.register_class(AddSoundToMeshOperator)
-    bpy.types.VIEW3D_MT_object.append(menu_func)
+# def register():
+#     bpy.utils.register_class(AddSoundToMeshOperator)
+#     bpy.types.VIEW3D_MT_object.append(menu_func)
 
 
-def unregister():
-    bpy.utils.unregister_class(AddSoundToMeshOperator)
-    bpy.types.VIEW3D_MT_object.remove(menu_func)
+# def unregister():
+#     bpy.utils.unregister_class(AddSoundToMeshOperator)
+#     bpy.types.VIEW3D_MT_object.remove(menu_func)
 
 
-if __name__ == "__main__":
-    register()
+# if __name__ == "__main__":
+#     register()
 
