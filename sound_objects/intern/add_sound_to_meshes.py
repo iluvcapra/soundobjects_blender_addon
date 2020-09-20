@@ -159,7 +159,8 @@ def add_speakers_to_meshes(meshes, context, sound=None,
             speaker_obj = context.selected_objects[0]
         
         constrain_speaker_to_mesh(speaker_obj, mesh)
-        
+        track_speaker_to_camera(speaker_obj, context.scene.camera)
+
         if sound_name_prefix is not None:
             sound = sound_bank.random_sound()
         
@@ -176,5 +177,5 @@ def add_speakers_to_meshes(meshes, context, sound=None,
 
         speaker_obj.data.update_tag()
 
-        track_speaker_to_camera(speaker_obj, context.scene.camera)
+       
    
