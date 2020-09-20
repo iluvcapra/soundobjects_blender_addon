@@ -1,7 +1,7 @@
 import bpy
 import numpy
 from numpy.linalg import norm
-from random import choice, uniform, gauss
+from random import uniform, gauss
 from math import floor
 from enum import IntFlag, Enum
 
