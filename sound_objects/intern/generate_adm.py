@@ -83,7 +83,7 @@ def group_speakers(speakers, scene) -> List[List[bpy.types.Object]]:
     return ret_val
 
 
-def adm_for_object(scene, sound_object: ObjectMix, room_size, adm_builder, object_index, wav_format):
+def adm_for_object(scene, sound_object: ObjectMix, room_size, adm_builder, object_index):
     fps = scene.render.fps
     frame_start = scene.frame_start
     frame_end = scene.frame_end
@@ -95,11 +95,11 @@ def adm_for_object(scene, sound_object: ObjectMix, room_size, adm_builder, objec
 
     created.audio_object.start = Fraction(frame_start, fps)
     created.audio_object.duration = Fraction(frame_end - frame_start, fps)
-    created.track_uid.sampleRate = wav_format.sampleRate
-    created.track_uid.bitDepth = wav_format.bitsPerSample
+    created.track_uid.sampleRate = sound_object.sample_rate
+    created.track_uid.bitDepth = sound_object.bits_per_sample
 
 
-def adm_for_scene(scene, sound_objects: List['ObjectMix'], wav_format, room_size):
+def adm_for_scene(scene, sound_objects: List['ObjectMix'], room_size):
     adm_builder = ADMBuilder()
 
     frame_start = scene.frame_start
@@ -113,7 +113,7 @@ def adm_for_scene(scene, sound_objects: List['ObjectMix'], wav_format, room_size
     adm_builder.create_content(audioContentName="Objects")
 
     for object_index, sound_object in enumerate(sound_objects):
-        adm_for_object(scene, sound_object, room_size, adm_builder, object_index, wav_format)
+        adm_for_object(scene, sound_object, room_size, adm_builder, object_index)
 
     adm = adm_builder.adm
 
@@ -149,13 +149,18 @@ def write_muxed_wav(mix_pool: ObjectMixPool, scene, out_format, room_size, outfi
     READ_BLOCK = 1024
 
     sound_objects = mix_pool.object_mixes
-    adm, chna = adm_for_scene(scene, sound_objects, out_format, room_size=room_size)
+    adm, chna = adm_for_scene(scene, sound_objects, room_size=room_size)
 
     outfile.axml = lxml.etree.tostring(adm, pretty_print=True)
     outfile.chna = chna
     outfile.bext = bext_data(scene, out_format.sampleRate, room_size=room_size)
 
     cursor = 0
+
+    # Not sure if this is necessary but lets do it
+    for obj in mix_pool.object_mixes:
+        obj.mixdown_reader.seek(0)
+
     while True:
         remainder = shortest_file - cursor
         to_read = min(READ_BLOCK, remainder)
@@ -220,7 +225,6 @@ def generate_adm(context: bpy.types.Context, filepath: str, room_size: float, ma
         mux_adm_from_object_mix_pool(scene, mix_pool=pool,
                                      output_filename=filepath,
                                      room_size=room_size)
-
 
     print("generate_adm exiting")
     return {'FINISHED'}

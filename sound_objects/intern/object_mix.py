@@ -31,6 +31,14 @@ class ObjectMix:
         return self.scene.frame_end
 
     @property
+    def sample_rate(self):
+        return self.mixdown_reader.sampleRate
+
+    @property
+    def bits_per_sample(self):
+        return self.mixdown_reader.bitdepth
+
+    @property
     def mixdown_reader(self) -> Bw64Reader:
         if self._mixdown_reader is None:
             self._mixdown_reader = Bw64Reader(self.mixdown_file_handle)
