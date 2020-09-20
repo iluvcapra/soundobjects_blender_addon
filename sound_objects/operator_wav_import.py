@@ -1,18 +1,6 @@
 import bpy
 import os
 
-# bl_info = {
-#     "name": "Import WAV Files",
-#     "description": "Import WAV files, with options to automatically pack and Fake user",
-#     "author": "Jamie Hardt",
-#     "version": (0, 20),
-#     "blender": (2, 90, 0),
-#     "location": "File > Import > WAV Audio Files",
-#     "warning": "", # used for warning icon and text in addons panel
-#     "support": "COMMUNITY",
-#     "category": "Import-Export",
-# }
-
 def read_some_data(context, filepath, pack, dir, fake):
     
     def import_one(fp):
@@ -32,13 +20,9 @@ def read_some_data(context, filepath, pack, dir, fake):
     else:
         import_one(filepath)
         
-    
-
     return {'FINISHED'}
 
 
-# ImportHelper is a helper class, defines filename and
-# invoke() function which calls the file selector.
 from bpy_extras.io_utils import ImportHelper
 from bpy.props import StringProperty, BoolProperty, EnumProperty
 from bpy.types import Operator
@@ -46,10 +30,9 @@ from bpy.types import Operator
 
 class ImportWav(Operator, ImportHelper):
     """Import WAV audio files"""
-    bl_idname = "import_test.wav_file_batch"  # important since its how bpy.ops.import_test.some_data is constructed
+    bl_idname = "import_test.wav_file_batch" 
     bl_label = "Import WAV Files"
 
-    # ImportHelper mixin class uses this
     filename_ext = ".wav"
 
     filter_glob: StringProperty(
@@ -57,14 +40,6 @@ class ImportWav(Operator, ImportHelper):
         options={'HIDDEN'},
         maxlen=255,  # Max internal buffer length, longer would be clamped.
     )
-
-    # List of operator properties, the attributes will be assigned
-    # to the class instance from the operator settings before calling.
-    # pack_it_in: BoolProperty(
-    #     name="Pack Into .blend File",
-    #     description="Embed the audio data into the .blend file",
-    #     default=True,
-    # )
     
     fake: BoolProperty(
         name="Add Fake User",

@@ -29,15 +29,6 @@ from math import sqrt
 from dataclasses import dataclass
 from typing import List, Tuple
 
-# bl_info = {
-#     "name": "Export ADM Broadcast-WAV File",
-#     "description": "Export a Broadcast-WAV with each speaker as an ADM object",
-#     "author": "Jamie Hardt",
-#     "version": (0, 23),
-#     "warning": "Requires `ear` EBU ADM Renderer package to be installed",
-#     "blender": (2, 90, 0),
-#     "category": "Import-Export",
-# }
 
 class FrameInterval:
     def __init__(self, start_frame, end_frame):
