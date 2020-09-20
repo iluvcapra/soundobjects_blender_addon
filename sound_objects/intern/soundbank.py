@@ -28,22 +28,22 @@ class SoundBank:
         
         if sound.filepath in self.cached_info.keys():
             return self.cached_info[sound.filepath]
-
-        if sound.filepath.startswith("//"):
-            path = bpy.path.abspath(sound.filepath)
         else:
-            path = sound.filepath
+            if sound.filepath.startswith("//"):
+                path = bpy.path.abspath(sound.filepath)
+            else:
+                path = sound.filepath
 
-        aud_sound = Sound(path)
-        samples = aud_sound.data()
-        sample_rate = aud_sound.specs[0]
-        index = numpy.where(samples == numpy.amax(samples))[0][0]
-        max_peak_frame = (index * fps / sample_rate)
+            aud_sound = Sound(path)
+            samples = aud_sound.data()
+            sample_rate = aud_sound.specs[0]
+            index = numpy.where(samples == numpy.amax(samples))[0][0]
+            max_peak_frame = (index * fps / sample_rate)
 
-        sample_count = aud_sound.length
-        frame_length = sample_count * fps / sample_rate
+            sample_count = aud_sound.length
+            frame_length = sample_count * fps / sample_rate
 
-        retvalue = (max_peak_frame , frame_length)
-        self.cached_info[sound.filepath] = retvalue
+            retvalue = (max_peak_frame , frame_length)
+            self.cached_info[sound.filepath] = retvalue
 
-        return retvalue
+            return retvalue
