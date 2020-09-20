@@ -3,7 +3,7 @@ import bpy
 from bpy.types import Operator
 from bpy.props import BoolProperty, StringProperty, EnumProperty, FloatProperty
 
-from .add_sound_to_meshes import add_speakers_to_meshes, TriggerMode
+from .intern.add_sound_to_meshes import add_speakers_to_meshes, TriggerMode
 
 class AddSoundToMeshOperator(Operator):
     """Add a speaker to each selected object"""
