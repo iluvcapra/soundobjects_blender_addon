@@ -6,7 +6,6 @@ from typing import List
 from random import choice
 from aud import Sound
 
-
 class SoundBank:
     def __init__(self, prefix):
         self.prefix = prefix

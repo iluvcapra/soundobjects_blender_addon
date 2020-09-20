@@ -1,7 +1,7 @@
 import bpy
 import os
 
-def read_some_data(filepath, pack, dir, fake):
+def import_wav_files(filepath, pack, dir, fake):
     
     def import_one(fp):
         sound = bpy.data.sounds.load(fp, check_existing=False)
@@ -54,5 +54,5 @@ class ImportWav(Operator, ImportHelper):
     )
 
     def execute(self, _):
-        return read_some_data(filepath=self.filepath, pack=False, dir=self.all_in_directory, fake=self.fake)
+        return import_wav_files(filepath=self.filepath, pack=False, dir=self.all_in_directory, fake=self.fake)
 
