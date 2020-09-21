@@ -52,17 +52,13 @@ def adm_object_rendering_context(scene: bpy.types.Scene):
 
 def group_speakers(speakers, scene) -> List[List[bpy.types.Object]]:
     def list_can_accept_speaker(speaker_list, speaker_to_test):
-        """
-        returns True if speaker_list contains no speakers active in
-        the range speaker_to_test is active in
-        """
         test_range = speaker_active_time_range(speaker_to_test)
-        for spk in speaker_list:
+        def filter_f(spk):
             spk_range = speaker_active_time_range(spk)
-            if spk_range.overlaps(test_range):
-                return False
+            return test_range.overlaps(spk_range)
 
-        return True
+        result = next((x for x in speaker_list if filter_f(x) is True), None)
+        return result is None
 
     by_priority = speakers_by_min_distance(scene, speakers)
 
@@ -89,6 +85,7 @@ def adm_for_object(scene, sound_object: ObjectMix, room_size, adm_builder, objec
     frame_end = scene.frame_end
 
     block_formats = sound_object.adm_block_formats(room_size=room_size)
+
     created = adm_builder.create_item_objects(track_index=object_index,
                                               name=sound_object.object_name,
                                               block_formats=block_formats)
@@ -99,7 +96,7 @@ def adm_for_object(scene, sound_object: ObjectMix, room_size, adm_builder, objec
     created.track_uid.bitDepth = sound_object.bits_per_sample
 
 
-def adm_for_scene(scene, sound_objects: List['ObjectMix'], room_size):
+def adm_for_scene(scene, sound_objects: List[ObjectMix], room_size):
     adm_builder = ADMBuilder()
 
     frame_start = scene.frame_start
@@ -225,6 +222,7 @@ def generate_adm(context: bpy.types.Context, filepath: str, room_size: float, ma
         mux_adm_from_object_mix_pool(scene, mix_pool=pool,
                                      output_filename=filepath,
                                      room_size=room_size)
+        print("Finished muxing ADM")
 
     print("generate_adm exiting")
     return {'FINISHED'}
