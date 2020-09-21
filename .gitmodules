@@ -1,0 +1,3 @@
+[submodule "sound_objects/extern/ebu_adm_renderer"]
+	path = sound_objects/extern/ebu_adm_renderer
+	url = https://github.com/ebu/ebu_adm_renderer.git
