@@ -24,18 +24,18 @@ from ear.fileio.adm.builder import (ADMBuilder)
 from ear.fileio.adm.generate_ids import generate_ids
 
 from .geom_utils import (speaker_active_time_range,
-                                             speakers_by_min_distance,
-                                             speakers_by_start_time)
+                         speakers_by_min_distance,
+                         speakers_by_start_time)
 
 from .object_mix import (ObjectMix, ObjectMixPool, object_mixes_from_source_groups)
 
 from .speaker_utils import (all_speakers)
 
 
-
 def group_speakers(speakers, scene) -> List[List[bpy.types.Object]]:
     def list_can_accept_speaker(speaker_list, speaker_to_test):
         test_range = speaker_active_time_range(speaker_to_test)
+
         def filter_f(spk):
             spk_range = speaker_active_time_range(spk)
             return test_range.overlaps(spk_range)
@@ -104,10 +104,6 @@ def adm_for_scene(scene, sound_objects: List[ObjectMix], room_size):
     return adm_to_xml(adm), chna
 
 
-########################################################################
-# File writing functions below
-
-
 def bext_data(scene, sample_rate, room_size):
     description = "SCENE={};ROOM_SIZE={}\n".format(scene.name, room_size).encode("ascii")
     originator_name = "Blender {}".format(bpy.app.version_string).encode("ascii")
@@ -125,20 +121,19 @@ def bext_data(scene, sample_rate, room_size):
     return data
 
 
-def write_muxed_wav(mix_pool: ObjectMixPool, scene, out_format, room_size, outfile, shortest_file):
-    READ_BLOCK = 1024
-
-    sound_objects = mix_pool.object_mixes
+def attach_outfile_metadata(out_format, outfile, room_size, scene, sound_objects):
     adm, chna = adm_for_scene(scene, sound_objects, room_size=room_size)
-
     outfile.axml = lxml.etree.tostring(adm, pretty_print=True)
     outfile.chna = chna
     outfile.bext = bext_data(scene, out_format.sampleRate, room_size=room_size)
 
+
+def write_outfile_audio_data(outfile, shortest_file, sound_objects):
+    READ_BLOCK = 1024
     cursor = 0
 
     # Not sure if this is necessary but lets do it
-    for obj in mix_pool.object_mixes:
+    for obj in sound_objects:
         obj.mixdown_reader.seek(0)
 
     while True:
@@ -155,8 +150,13 @@ def write_muxed_wav(mix_pool: ObjectMixPool, scene, out_format, room_size, outfi
         cursor = cursor + to_read
 
 
-def mux_adm_from_object_mix_pool(scene, mix_pool: ObjectMixPool, output_filename, room_size=1.):
+def write_muxed_wav(mix_pool: ObjectMixPool, scene, out_format, room_size, outfile, shortest_file):
+    sound_objects = mix_pool.object_mixes
+    attach_outfile_metadata(out_format, outfile, room_size, scene, sound_objects)
+    write_outfile_audio_data(outfile, shortest_file, sound_objects)
 
+
+def mux_adm_from_object_mix_pool(scene, mix_pool: ObjectMixPool, output_filename, room_size=1.):
     object_count = len(mix_pool.object_mixes)
     assert object_count > 0
 
@@ -168,6 +168,14 @@ def mux_adm_from_object_mix_pool(scene, mix_pool: ObjectMixPool, output_filename
         write_muxed_wav(mix_pool, scene, out_format, room_size,
                         outfile, mix_pool.shortest_file_length)
 
+
+def print_partition_results(object_groups, sound_sources, too_far_speakers):
+    print("Will create {} objects for {} sources, ignoring {} sources".format(
+        len(object_groups), len(sound_sources), len(too_far_speakers)))
+    for i, group in enumerate(object_groups):
+        print("Object Group %i" % i)
+        for source in group:
+            print(" - %s" % source.name)
 
 
 def partition_sounds_to_objects(scene, max_objects):
@@ -183,13 +191,8 @@ def partition_sounds_to_objects(scene, max_objects):
         too_far_speakers = object_groups[max_objects:]
         object_groups = object_groups[0:max_objects]
 
-    print("Will create {} objects for {} sources, ignoring {} sources".format(
-        len(object_groups), len(sound_sources), len(too_far_speakers)))
+    print_partition_results(object_groups, sound_sources, too_far_speakers)
 
-    for i, group in enumerate(object_groups):
-        print("Object Group %i" % i)
-        for source in group:
-            print(" - %s" % source.name)
     return object_groups, too_far_speakers
 
 
@@ -201,8 +204,9 @@ def generate_adm(context: bpy.types.Context, filepath: str, room_size: float, ma
     if len(object_groups) == 0:
         return {'FINISHED'}
 
-    mix_groups = object_mixes_from_source_groups(object_groups, 
-                            scene=scene, base_dir=dirname(filepath))
+    mix_groups = object_mixes_from_source_groups(object_groups,
+                                                 scene=scene,
+                                                 base_dir=dirname(filepath))
 
     with ObjectMixPool(object_mixes=mix_groups) as pool:
         mux_adm_from_object_mix_pool(scene, mix_pool=pool,
