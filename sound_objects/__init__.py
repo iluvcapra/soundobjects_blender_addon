@@ -10,7 +10,7 @@ bl_info = {
     "author": "Jamie Hardt",
     "version": (0, 1),
     "warning": "Requires `ear` EBU ADM Renderer package to be installed",
-    "blender": (2, 90, 0)
+    "blender": (2, 90, 0),
     "category": "Import-Export"
 }
 
