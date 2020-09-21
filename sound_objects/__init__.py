@@ -11,7 +11,7 @@ bl_info = {
     "version": (0, 1),
     "warning": "Requires `ear` EBU ADM Renderer package to be installed",
     "blender": (2, 90, 0)
-    "category": "Object"
+    "category": "Import-Export"
 }
 
 
