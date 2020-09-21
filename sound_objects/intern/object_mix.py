@@ -138,7 +138,6 @@ class ObjectMix:
             self.intermediate_filename = None
 
 
-#@contextmanager
 class ObjectMixPool:
 
     def __init__(self, object_mixes: List[ObjectMix]):

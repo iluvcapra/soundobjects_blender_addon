@@ -70,7 +70,7 @@ def closest_approach_to_camera(scene, speaker_object) -> (float, int):
             max_dist = dist
             at_time = frame
 
-    return (max_dist, at_time)
+    return max_dist, at_time
 
 
 def speaker_active_time_range(speaker) -> FrameInterval:
