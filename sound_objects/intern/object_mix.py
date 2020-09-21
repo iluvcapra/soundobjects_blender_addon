@@ -7,9 +7,27 @@ from typing import List
 from ear.fileio.adm.elements import ObjectCartesianPosition, JumpPosition, AudioBlockFormatObjects
 from ear.fileio.bw64 import Bw64Reader
 
-from sound_objects.intern.generate_adm import adm_object_rendering_context
-from sound_objects.intern.geom_utils import speaker_active_time_range, compute_relative_vector, room_norm_vector
-from sound_objects.intern.speaker_utils import solo_speakers, unmute_all_speakers
+from .geom_utils import speaker_active_time_range, compute_relative_vector, room_norm_vector
+from .speaker_utils import solo_speakers, unmute_all_speakers
+
+
+@contextmanager
+def adm_object_rendering_context(scene: bpy.types.Scene):
+    old_ff = scene.render.image_settings.file_format
+    old_codec = scene.render.ffmpeg.audio_codec
+    old_chans = scene.render.ffmpeg.audio_channels
+
+    scene = bpy.context.scene
+
+    scene.render.image_settings.file_format = 'FFMPEG'
+    scene.render.ffmpeg.audio_codec = 'PCM'
+    scene.render.ffmpeg.audio_channels = 'MONO'
+
+    yield scene
+
+    scene.render.image_settings.file_format = old_ff
+    scene.render.ffmpeg.audio_codec = old_codec
+    scene.render.ffmpeg.audio_channels = old_chans
 
 
 class ObjectMix:
@@ -115,20 +133,13 @@ class ObjectMix:
             self._mixdown_file_handle.close()
             self._mixdown_file_handle = None
 
-        os.remove(self.intermediate_filename)
-        self.intermediate_filename = None
+        if self.intermediate_filename is not None:
+            os.remove(self.intermediate_filename)
+            self.intermediate_filename = None
 
 
-@contextmanager
+#@contextmanager
 class ObjectMixPool:
-
-    @classmethod
-    def pool_from_source_groups(cls, groups: List[List[bpy.types.Speaker]]):
-        mixes = []
-        for group in groups:
-            mixes.append(ObjectMix(sources=group))
-
-        return ObjectMixPool(object_mixes=mixes)
 
     def __init__(self, object_mixes: List[ObjectMix]):
         self.object_mixes = object_mixes
@@ -142,5 +153,13 @@ class ObjectMixPool:
 
     @property
     def shortest_file_length(self):
-        lengths = map(lambda f: len(f.mixdown_reader))
+        lengths = map(lambda f: len(f.mixdown_reader), self.object_mixes)
         return min(lengths)
+
+
+def object_mixes_from_source_groups(groups: List[List[bpy.types.Speaker]], scene, base_dir):
+    mixes = []
+    for group in groups:
+        mixes.append(ObjectMix(sources=group, scene=scene, base_dir=base_dir))
+
+    return mixes

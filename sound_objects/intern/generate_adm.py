@@ -6,6 +6,7 @@ import lxml
 import uuid
 from fractions import Fraction
 import struct
+from os.path import dirname
 
 import numpy
 
@@ -22,32 +23,14 @@ from ear.fileio.adm.xml import adm_to_xml
 from ear.fileio.adm.builder import (ADMBuilder)
 from ear.fileio.adm.generate_ids import generate_ids
 
-from sound_objects.intern.geom_utils import (speaker_active_time_range,
+from .geom_utils import (speaker_active_time_range,
                                              speakers_by_min_distance,
                                              speakers_by_start_time)
 
-from sound_objects.intern.object_mix import (ObjectMix, ObjectMixPool)
+from .object_mix import (ObjectMix, ObjectMixPool, object_mixes_from_source_groups)
 
-from sound_objects.intern.speaker_utils import (all_speakers)
+from .speaker_utils import (all_speakers)
 
-
-@contextmanager
-def adm_object_rendering_context(scene: bpy.types.Scene):
-    old_ff = scene.render.image_settings.file_format
-    old_codec = scene.render.ffmpeg.audio_codec
-    old_chans = scene.render.ffmpeg.audio_channels
-
-    scene = bpy.context.scene
-
-    scene.render.image_settings.file_format = 'FFMPEG'
-    scene.render.ffmpeg.audio_codec = 'PCM'
-    scene.render.ffmpeg.audio_channels = 'MONO'
-
-    yield scene
-
-    scene.render.image_settings.file_format = old_ff
-    scene.render.ffmpeg.audio_codec = old_codec
-    scene.render.ffmpeg.audio_channels = old_chans
 
 
 def group_speakers(speakers, scene) -> List[List[bpy.types.Object]]:
@@ -218,7 +201,10 @@ def generate_adm(context: bpy.types.Context, filepath: str, room_size: float, ma
     if len(object_groups) == 0:
         return {'FINISHED'}
 
-    with ObjectMixPool.pool_from_source_groups(object_groups) as pool:
+    mix_groups = object_mixes_from_source_groups(object_groups, 
+                            scene=scene, base_dir=dirname(filepath))
+
+    with ObjectMixPool(object_mixes=mix_groups) as pool:
         mux_adm_from_object_mix_pool(scene, mix_pool=pool,
                                      output_filename=filepath,
                                      room_size=room_size)

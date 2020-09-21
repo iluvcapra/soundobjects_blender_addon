@@ -1,9 +1,12 @@
 import sys
 from math import sqrt
 
+import bpy
+
 import numpy
 from numpy.linalg import norm
 
+from mathutils import Vector, Quaternion
 
 class FrameInterval:
     def __init__(self, start_frame, end_frame):
