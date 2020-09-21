@@ -35,10 +35,11 @@ class ADMWaveExport(Operator, ExportHelper):
         max=118
     )
 
-    create_bed:BoolProperty(
+    create_bed: BoolProperty(
         name="Create 7.1 Bed",
         description="Create a bed for all sounds not included on object tracks",
-        default=False
+        default=False,
+        options={'HIDDEN'}
     )
 
     def execute(self, context):
