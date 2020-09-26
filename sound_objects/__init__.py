@@ -19,9 +19,10 @@ class SoundObjectAttachmentPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_sound_object_attachment_panel"
     bl_space_type = "VIEW_3D"
     bl_label = "Attach Sounds"
-    bl_region_type = "TOOLS"
-    #bl_category = "Tool"
+    bl_region_type = "UI"
+    bl_category = "Tools"
     bl_context = "object"
+    bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
         self.layout.label(text="Attach Sounds")
