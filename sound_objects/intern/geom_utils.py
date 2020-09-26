@@ -68,6 +68,12 @@ def room_norm_vector(vec, room_size=1.) -> Vector:
 
 
 def closest_approach_to_camera(scene, speaker_object) -> (float, int):
+    """
+    The distance and frame number of `speaker_object`s closest point to
+    the scene's camera.
+    
+    (Works for any object, not just speakers.)
+    """
     max_dist = sys.float_info.max
     at_time = scene.frame_start
     for frame in range(scene.frame_start, scene.frame_end + 1):
@@ -84,9 +90,7 @@ def closest_approach_to_camera(scene, speaker_object) -> (float, int):
 
 def speaker_active_time_range(speaker) -> FrameInterval:
     """
-    The time range this speaker must control in order to sound right.
-
-    At this time this is assuming the str
+    The time range of the first strip, of the first NLA Track of this speaker.
     """
     start, end = 0xffffffff, -0xffffffff
     for track in speaker.animation_data.nla_tracks:
