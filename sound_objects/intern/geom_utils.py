@@ -45,11 +45,20 @@ def room_norm_vector(vec, room_size=1.) -> Vector:
 
     The room is a cube with the camera at its center. We use a chebyshev normalization
     to convert a vector in world or camera space into a vector the represents the projection
-    of that vector onto the room's walls.
+    of that vector onto the room's walls. The Room Vector is the immediate the X, Y and Z 
+    coordinate of the corresponding ADM Block Format source object position.
 
     The Pro Tools/Dolby Atmos workflow I am targeting uses "Room Centric" panner coordinates
     ("cartesian allocentric coordinates" in ADM speak) and this process seems to yield good
     results.
+    
+    I also experimented with using normalized camera frame coordinates from the 
+    bpy_extras.object_utils.world_to_camera_view method and this gives very good results as
+    long as the object is on-screen; coordinates for objects off the screen are unusable.
+    
+    In the future it would be worth exploring wether there's a way to produce ADM 
+    coordinates that are "Screen-accurate" while the object is on-screen, but still gives
+    sensible results when the object is off-screen as well.
     """
     chebyshev = norm(vec, ord=numpy.inf)
     if chebyshev < room_size:
@@ -59,6 +68,12 @@ def room_norm_vector(vec, room_size=1.) -> Vector:
 
 
 def closest_approach_to_camera(scene, speaker_object) -> (float, int):
+    """
+    The distance and frame number of `speaker_object`s closest point to
+    the scene's camera.
+    
+    (Works for any object, not just speakers.)
+    """
     max_dist = sys.float_info.max
     at_time = scene.frame_start
     for frame in range(scene.frame_start, scene.frame_end + 1):
@@ -75,9 +90,7 @@ def closest_approach_to_camera(scene, speaker_object) -> (float, int):
 
 def speaker_active_time_range(speaker) -> FrameInterval:
     """
-    The time range this speaker must control in order to sound right.
-
-    At this time this is assuming the str
+    The time range of the first strip, of the first NLA Track of this speaker.
     """
     start, end = 0xffffffff, -0xffffffff
     for track in speaker.animation_data.nla_tracks:
