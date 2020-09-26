@@ -14,6 +14,17 @@ bl_info = {
     "category": "Import-Export"
 }
 
+class SoundObjectAttachmentPanel(bpy.types.Panel):
+    bl_idname = "OBJECT_PT_sound_object_attachment_panel"
+    bl_space_type = "VIEW_3D"
+    bl_label = "Attach Sounds"
+    bl_region_type = "WINDOW"
+    bl_context = "object"
+
+    def draw(self, context):
+        self.layout.label(text="Attach Sounds")
+
+
 
 def import_wav_menu_callback(self, context):
     self.layout.operator(ImportWav.bl_idname, text="WAV Audio Files (.wav)")
@@ -35,6 +46,8 @@ def register():
     bpy.types.TOPBAR_MT_file_import.append(import_wav_menu_callback)
     bpy.types.TOPBAR_MT_file_export.append(export_adm_menu_callback)
     bpy.types.VIEW3D_MT_object.append(add_sound_to_mesh_menu_callback)
+
+    bpy.utils.register_class(SoundObjectAttachmentPanel)
     
 
 def unregister():
@@ -45,3 +58,5 @@ def unregister():
     bpy.types.TOPBAR_MT_file_import.remove(import_wav_menu_callback)
     bpy.types.TOPBAR_MT_file_export.remove(export_adm_menu_callback)
     bpy.types.VIEW3D_MT_object.remove(add_sound_to_mesh_menu_callback)
+
+    bpy.utils.unregister_class(SoundObjectAttachmentPanel)
