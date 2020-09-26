@@ -14,6 +14,7 @@ bl_info = {
     "category": "Import-Export"
 }
 
+
 class SoundObjectAttachmentPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_sound_object_attachment_panel"
     bl_space_type = "VIEW_3D"
