@@ -20,7 +20,7 @@ class SoundObjectAttachmentPanel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_label = "Attach Sounds"
     bl_region_type = "TOOLS"
-    bl_category = "Tool"
+    #bl_category = "Tool"
     bl_context = "object"
 
     def draw(self, context):
