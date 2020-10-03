@@ -1,7 +1,7 @@
 # soundobjects Blender Add-On
 
-This add-on adds three operators for working with immersive 3D audio, specifically it allows you to create ADM Boradcast
-WAVE files for use with Dolby ATMOS or other object-based sound mixing workflows.
+This add-on adds three operators for working with immersive 3D audio, specifically it allows you to create ADM Broadcast
+WAVE files for use with Dolby Atmos or other object-based sound mixing workflows.
 
 ## Operators
 
