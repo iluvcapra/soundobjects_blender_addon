@@ -1,7 +1,10 @@
 # soundobjects Blender Add-On
 
-This add-on adds three operators for working with immersive 3D audio, specifically it allows you to create ADM Broadcast
-WAVE files for use with Dolby Atmos or other object-based sound mixing workflows.
+This add-on adds three operators for working with immersive 3D audio in [Blender][blender], specifically it allows you to create ADM Broadcast
+WAVE files for use with [Dolby Atmos][atmos] or other object-based sound mixing workflows.
+
+[blender]: https://www.blender.org
+[atmos]: https://www.dolby.com/technologies/dolby-atmos/
 
 ## Operators
 
@@ -27,4 +30,5 @@ panning information to the client. (Has been tested and works with Avid Pro Tool
 
 ## Important Note
 
-This add-on requires that the [EBU Audio Renderer](https://github.com/ebu/ebu_adm_renderer) (`ear` v2.0) Python package be installed to Blender's Python installation.
+This add-on requires that the [EBU Audio Renderer](https://github.com/ebu/ebu_adm_renderer) (`ear` v2.0) Python package 
+be installed to Blender's Python.
