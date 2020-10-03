@@ -12,22 +12,10 @@ bl_info = {
     "warning": "Requires `ear` EBU ADM Renderer package to be installed",
     "blender": (2, 90, 0),
     "category": "Import-Export",
-    "tracker_url": "https://github.com/iluvcapra/soundobjects_blender_addon/issues"
+    "support": "TESTING",
+    "tracker_url": "https://github.com/iluvcapra/soundobjects_blender_addon/issues",
+    "wiki_url": ""
 }
-
-
-# class SoundObjectAttachmentPanel(bpy.types.Panel):
-#     bl_idname = "OBJECT_PT_sound_object_attachment_panel"
-#     bl_space_type = "VIEW_3D"
-#     bl_label = "Attach Sounds"
-#     bl_region_type = "UI"
-#     bl_category = "Tools"
-#     bl_context = "object"
-#     bl_options = {"DEFAULT_CLOSED"}
-
-#     def draw(self, context):
-#         self.layout.label(text="Attach Sounds")
-
 
 
 def import_wav_menu_callback(self, context):
