@@ -3,7 +3,7 @@
 This add-on adds three operators for working with immersive 3D audio in [Blender][blender], specifically it allows you to create ADM Broadcast
 WAVE files for use with [Dolby Atmos][atmos] or other object-based sound mixing workflows.
 
-https://vimeo.com/464569386
+<iframe src="https://player.vimeo.com/video/464569386" width="640" height="480" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
 
 [blender]: https://www.blender.org
 [atmos]: https://www.dolby.com/technologies/dolby-atmos/
