@@ -3,7 +3,8 @@
 This add-on adds three operators for working with immersive 3D audio in [Blender][blender], specifically it allows you to create ADM Broadcast
 WAVE files for use with [Dolby Atmos][atmos] or other object-based sound mixing workflows.
 
-<iframe src="https://player.vimeo.com/video/464569386" width="640" height="480" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
+[Here](https://vimeo.com/464569386) you can see a short demo of how to add sounds to an animated Blender scene and import the resulting file 
+into Pro Tools and then play them into a Dolby DAPS Renderer.
 
 [blender]: https://www.blender.org
 [atmos]: https://www.dolby.com/technologies/dolby-atmos/
