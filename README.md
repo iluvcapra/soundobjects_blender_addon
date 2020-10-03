@@ -27,4 +27,4 @@ panning information to the client. (Has been tested and works with Avid Pro Tool
 
 ## Important Note
 
-This add-on requires that the EBU Audio Renderer (`ear` v1.0) Python package be installed to Blender's Python installation.
+This add-on requires that the [EBU Audio Renderer](https://github.com/ebu/ebu_adm_renderer) (`ear` v2.0) Python package be installed to Blender's Python installation.
