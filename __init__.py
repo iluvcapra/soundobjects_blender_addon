@@ -10,12 +10,24 @@ bl_info = {
     "author": "Jamie Hardt",
     "version": (0, 1),
     "warning": "Requires `ear` EBU ADM Renderer package to be installed",
-    "blender": (2, 90, 0),
+    "blender": (2, 91, 2),
     "category": "Import-Export",
     "support": "TESTING",
     "tracker_url": "https://github.com/iluvcapra/soundobjects_blender_addon/issues",
     "wiki_url": ""
 }
+
+#class SoundObjectAttachmentPanel(bpy.types.Panel):
+#    bl_idname = "OBJECT_PT_sound_object_attachment_panel"
+#    bl_space_type = "VIEW_3D"
+#    bl_label = "Attach Sounds"
+#    bl_region_type = "UI"
+#    bl_category = "Tools"
+#    bl_context = "object"
+#    bl_options = {"DEFAULT_CLOSED"}
+
+#    def draw(self, context):
+#        self.layout.label(text="Attach Sounds")
 
 
 def import_wav_menu_callback(self, context):
@@ -39,7 +51,7 @@ def register():
     bpy.types.TOPBAR_MT_file_export.append(export_adm_menu_callback)
     bpy.types.VIEW3D_MT_object.append(add_sound_to_mesh_menu_callback)
 
-    bpy.utils.register_class(SoundObjectAttachmentPanel)
+#    bpy.utils.register_class(SoundObjectAttachmentPanel)
     
 
 def unregister():
@@ -51,4 +63,4 @@ def unregister():
     bpy.types.TOPBAR_MT_file_export.remove(export_adm_menu_callback)
     bpy.types.VIEW3D_MT_object.remove(add_sound_to_mesh_menu_callback)
 
-    bpy.utils.unregister_class(SoundObjectAttachmentPanel)
+#    bpy.utils.unregister_class(SoundObjectAttachmentPanel)
